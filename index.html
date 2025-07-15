@@ -33,7 +33,7 @@
       <button id="review-button">復習モードへ</button>
       <button id="continue-button">次の出題へ</button>
     </div>
-    <button id="reset-button" class="hidden">リセット</button>
+    <button id="reset-button">TOPに戻る</button>
   </div>
 
   <script>
@@ -44,6 +44,7 @@
     let score = 0;
     let incorrectQuestions = [];
     let currentIndex = 0;
+    let usedIds = [];
 
     async function loadData() {
       const res = await fetch("questions_with_id.json");
@@ -56,7 +57,13 @@
       document.getElementById("quiz-area").classList.remove("hidden");
 
       const count = document.getElementById("question-count").value;
-      const shuffled = [...questions].sort(() => Math.random() - 0.5);
+      const availableQuestions = questions.filter(q => !usedIds.includes(q.id));
+      if (availableQuestions.length === 0) {
+        alert("すべての問題を出題済みです。TOPに戻ってリセットしてください。");
+        return;
+      }
+
+      const shuffled = shuffleArray(availableQuestions);
       remainingQuestions = (count === "all") ? shuffled : shuffled.slice(0, parseInt(count));
       total = remainingQuestions.length;
       score = 0;
@@ -91,18 +98,17 @@
       let choices = [];
 
       if (type === 1) {
-        // 正しい文を選ぶ：正規文1＋他の誤文2
         const incorrects = questions.filter(x => x.id !== q.id).map(x => x.incorrect);
         const selected = shuffleArray(incorrects).slice(0, 2);
         choices = [q.correct, ...selected];
       } else {
-        // 誤った文を選ぶ：誤文1＋他の正規文2
         const corrects = questions.filter(x => x.id !== q.id).map(x => x.correct);
         const selected = shuffleArray(corrects).slice(0, 2);
         choices = [q.incorrect, ...selected];
       }
 
       currentQuestion.choices = shuffleArray(choices);
+      usedIds.push(q.id); // 出題履歴に記録
 
       document.getElementById("question-text").textContent =
         type === 1 ? "次のうち、正しい文章を選んでください。" : "次のうち、誤った文章はどれでしょう？";
@@ -184,15 +190,21 @@
 
     document.getElementById("start-button").onclick = startQuiz;
     document.getElementById("next-button").onclick = showNextQuestion;
-    document.getElementById("reset-button").onclick = () => location.reload();
+
+    document.getElementById("reset-button").onclick = () => {
+      const confirmReset = confirm("出題状況がリセットされます。TOPに戻りますか？");
+      if (confirmReset) location.reload();
+    };
+
     document.getElementById("review-button").onclick = () => {
       remainingQuestions = [...incorrectQuestions];
       incorrectQuestions = [];
       currentIndex = 0;
       showNextQuestion();
     };
+
     document.getElementById("continue-button").onclick = () => {
-      location.reload();
+      startQuiz();
     };
 
     loadData();
