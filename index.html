@@ -28,11 +28,12 @@
       <div id="explanation" class="hidden"></div>
       <button id="next-button" class="hidden">次へ</button>
     </div>
+
     <div id="score-display" class="hidden"></div>
 
     <div id="review-buttons" class="hidden">
-      <button id="review-button">復習モードへ</button>
-      <button id="continue-button">次の出題へ</button>
+      <button id="review-button" class="hidden">復習モードへ</button>
+      <button id="continue-button" class="hidden">次の出題へ</button>
     </div>
 
     <button id="reset-button">TOPに戻る</button>
@@ -58,9 +59,12 @@
       document.getElementById("setup").classList.add("hidden");
       document.getElementById("quiz-area").classList.remove("hidden");
 
+      // 初期化
       document.getElementById("question-counter").classList.remove("hidden");
       document.getElementById("score-display").classList.add("hidden");
       document.getElementById("review-buttons").classList.add("hidden");
+      document.getElementById("review-button").classList.add("hidden");
+      document.getElementById("continue-button").classList.add("hidden");
 
       const count = document.getElementById("question-count").value;
       const availableQuestions = questions.filter(q => !usedIds.includes(q.id));
@@ -89,7 +93,11 @@
       document.getElementById("question-counter").textContent = `【 ${currentIndex} / ${total} 問 】`;
       document.getElementById("explanation").classList.add("hidden");
       document.getElementById("next-button").classList.add("hidden");
+
+      // 必ず非表示
       document.getElementById("review-buttons").classList.add("hidden");
+      document.getElementById("review-button").classList.add("hidden");
+      document.getElementById("continue-button").classList.add("hidden");
 
       const q = remainingQuestions.pop();
       const type = Math.random() < 0.5 ? 1 : 2;
@@ -174,7 +182,11 @@
       document.getElementById("explanation").innerHTML = explanation;
       document.getElementById("explanation").classList.remove("hidden");
       document.getElementById("next-button").classList.remove("hidden");
+
+      // 常に非表示にしておく
       document.getElementById("review-buttons").classList.add("hidden");
+      document.getElementById("review-button").classList.add("hidden");
+      document.getElementById("continue-button").classList.add("hidden");
     }
 
     function showResults() {
@@ -184,11 +196,16 @@
       document.getElementById("score-display").textContent = `スコア：${score} / ${total}`;
       document.getElementById("score-display").classList.remove("hidden");
 
+      document.getElementById("review-buttons").classList.remove("hidden");
+      document.getElementById("continue-button").classList.remove("hidden");
+
       if (incorrectQuestions.length > 0) {
-        document.getElementById("review-buttons").classList.remove("hidden");
+        document.getElementById("review-button").classList.remove("hidden");
       } else {
-        document.getElementById("reset-button").classList.remove("hidden");
+        document.getElementById("review-button").classList.add("hidden");
       }
+
+      document.getElementById("reset-button").classList.remove("hidden");
     }
 
     function shuffleArray(array) {
@@ -207,7 +224,11 @@
       remainingQuestions = [...incorrectQuestions];
       incorrectQuestions = [];
       currentIndex = 0;
+
       document.getElementById("review-buttons").classList.add("hidden");
+      document.getElementById("review-button").classList.add("hidden");
+      document.getElementById("continue-button").classList.add("hidden");
+
       showNextQuestion();
     };
 
