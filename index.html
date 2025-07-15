@@ -29,10 +29,12 @@
       <button id="next-button" class="hidden">次へ</button>
     </div>
     <div id="score-display" class="hidden"></div>
+
     <div id="review-buttons" class="hidden">
       <button id="review-button">復習モードへ</button>
       <button id="continue-button">次の出題へ</button>
     </div>
+
     <button id="reset-button">TOPに戻る</button>
   </div>
 
@@ -56,7 +58,6 @@
       document.getElementById("setup").classList.add("hidden");
       document.getElementById("quiz-area").classList.remove("hidden");
 
-      // 表示リセット
       document.getElementById("question-counter").classList.remove("hidden");
       document.getElementById("score-display").classList.add("hidden");
       document.getElementById("review-buttons").classList.add("hidden");
@@ -173,7 +174,7 @@
       document.getElementById("explanation").innerHTML = explanation;
       document.getElementById("explanation").classList.remove("hidden");
       document.getElementById("next-button").classList.remove("hidden");
-      document.getElementById("review-buttons").classList.add("hidden"); // ✅ 出題中は常に非表示
+      document.getElementById("review-buttons").classList.add("hidden");
     }
 
     function showResults() {
@@ -206,7 +207,7 @@
       remainingQuestions = [...incorrectQuestions];
       incorrectQuestions = [];
       currentIndex = 0;
-      document.getElementById("review-buttons").classList.add("hidden"); // 念のため復習中も非表示
+      document.getElementById("review-buttons").classList.add("hidden");
       showNextQuestion();
     };
 
