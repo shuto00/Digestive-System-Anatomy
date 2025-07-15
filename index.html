@@ -1,0 +1,126 @@
+
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <title>正誤問題クイズ</title>
+  <style>
+    body { font-family: sans-serif; padding: 20px; max-width: 700px; margin: auto; }
+    .question { font-size: 1.2em; margin-bottom: 10px; }
+    .choice { display: block; margin: 8px 0; }
+    .result { margin-top: 20px; font-weight: bold; }
+    button { margin-top: 20px; padding: 10px; }
+  </style>
+</head>
+<body>
+  <h1>正誤問題クイズ</h1>
+  <div id="quiz-container">
+    <div class="question" id="question"></div>
+    <div id="choices"></div>
+    <div class="result" id="result"></div>
+    <button onclick="nextQuestion()">次の問題</button>
+    <button onclick="resetQuiz()">リセット</button>
+  </div>
+
+  <script>
+    let data = [];
+    let unused = [];
+    let used = [];
+
+    function shuffle(array) {
+      for (let i = array.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [array[i], array[j]] = [array[j], array[i]];
+      }
+    }
+
+    function startQuiz() {
+      unused = [...data];
+      used = [];
+      nextQuestion();
+    }
+
+    function nextQuestion() {
+      document.getElementById("result").innerHTML = "";
+      if (unused.length === 0) {
+        document.getElementById("question").innerText = "全ての問題を解きました。リセットしてください。";
+        document.getElementById("choices").innerHTML = "";
+        return;
+      }
+
+      const pattern = Math.random() < 0.5 ? 1 : 2;
+      const questionType = pattern === 1 ? 
+        "次のうち、正しい文章を選んでください" : 
+        "次のうち、誤った文章はどれでしょう";
+
+      const current = unused.pop();
+      used.push(current);
+
+      let options = [];
+      let correctAnswer = "";
+
+      if (pattern === 1) {
+        correctAnswer = current.correct;
+        options = [current.correct, getRandomIncorrect(), getRandomIncorrect()];
+      } else {
+        correctAnswer = current.incorrect;
+        options = [current.incorrect, getRandomCorrect(), getRandomCorrect()];
+      }
+
+      shuffle(options);
+      document.getElementById("question").innerText = questionType;
+      const choicesDiv = document.getElementById("choices");
+      choicesDiv.innerHTML = "";
+
+      options.forEach((option) => {
+        const btn = document.createElement("button");
+        btn.innerText = option;
+        btn.className = "choice";
+        btn.onclick = () => checkAnswer(option, correctAnswer, current);
+        choicesDiv.appendChild(btn);
+      });
+    }
+
+    function checkAnswer(selected, correct, current) {
+      let resultText = selected === correct ? "✅ 正解！" : "❌ 不正解！";
+      if (selected !== correct) {
+        if (selected === current.incorrect) {
+          resultText += `<br>→ この誤文の正しい文: ${current.correct}`;
+        } else if (selected === current.correct) {
+          resultText += `<br>→ この正解文に対応する誤文: ${current.incorrect}`;
+        }
+      }
+      document.getElementById("result").innerHTML = resultText;
+    }
+
+    function getRandomIncorrect() {
+      const all = [...data.map(d => d.incorrect)];
+      return all[Math.floor(Math.random() * all.length)];
+    }
+
+    function getRandomCorrect() {
+      const all = [...data.map(d => d.correct)];
+      return all[Math.floor(Math.random() * all.length)];
+    }
+
+    function resetQuiz() {
+      unused = [...data];
+      used = [];
+      document.getElementById("result").innerHTML = "";
+      nextQuestion();
+    }
+
+    // Load external JSON
+    fetch('data.json')
+      .then(response => response.json())
+      .then(json => {
+        data = json;
+        startQuiz();
+      })
+      .catch(err => {
+        document.getElementById("quiz-container").innerHTML = "データの読み込みに失敗しました。";
+        console.error(err);
+      });
+  </script>
+</body>
+</html>
