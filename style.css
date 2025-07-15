@@ -127,6 +127,8 @@ button:hover {
 
 #reset-button {
   background-color: #555;
+  display: block;
+  margin: 30px auto;
 }
 
 .hidden {
