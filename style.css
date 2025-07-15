@@ -131,6 +131,7 @@ button:hover {
   margin: 30px auto;
 }
 
+/* ✅ 表示制御用：強制非表示にする */
 .hidden {
-  display: none;
+  display: none !important;
 }
