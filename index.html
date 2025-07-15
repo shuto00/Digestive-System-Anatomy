@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>正誤問題クイズ</title>
-  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="style.css" />
 </head>
 <body>
   <div id="title">正誤問題クイズ</div>
@@ -43,11 +43,10 @@
     let total = 0;
     let score = 0;
     let incorrectQuestions = [];
-    let isReviewMode = false;
     let currentIndex = 0;
 
     async function loadData() {
-      const res = await fetch("questions.json");
+      const res = await fetch("questions_with_id.json");
       questions = await res.json();
     }
 
@@ -63,7 +62,6 @@
       score = 0;
       currentIndex = 0;
       incorrectQuestions = [];
-      isReviewMode = false;
 
       showNextQuestion();
     }
@@ -81,30 +79,37 @@
       document.getElementById("review-buttons").classList.add("hidden");
 
       const q = remainingQuestions.pop();
-      currentQuestion = q;
-
       const type = Math.random() < 0.5 ? 1 : 2;
-      currentQuestion.type = type;
+
+      currentQuestion = {
+        id: q.id,
+        correct: q.correct,
+        incorrect: q.incorrect,
+        type: type
+      };
 
       let choices = [];
 
       if (type === 1) {
-        // 正しい文を選ぶ
-        const incorrects = questions.filter(x => x.incorrect !== q.incorrect).sort(() => Math.random() - 0.5);
-        choices = [q.correct, incorrects[0].incorrect, incorrects[1].incorrect];
+        // 正しい文を選ぶ：正規文1＋他の誤文2
+        const incorrects = questions.filter(x => x.id !== q.id).map(x => x.incorrect);
+        const selected = shuffleArray(incorrects).slice(0, 2);
+        choices = [q.correct, ...selected];
       } else {
-        // 誤った文を選ぶ
-        const valids = questions.filter(x => x.correct !== q.correct).sort(() => Math.random() - 0.5);
-        choices = [q.incorrect, valids[0].correct, valids[1].correct];
+        // 誤った文を選ぶ：誤文1＋他の正規文2
+        const corrects = questions.filter(x => x.id !== q.id).map(x => x.correct);
+        const selected = shuffleArray(corrects).slice(0, 2);
+        choices = [q.incorrect, ...selected];
       }
 
-      currentQuestion.choices = choices.sort(() => Math.random() - 0.5);
+      currentQuestion.choices = shuffleArray(choices);
 
       document.getElementById("question-text").textContent =
         type === 1 ? "次のうち、正しい文章を選んでください。" : "次のうち、誤った文章はどれでしょう？";
 
       const container = document.getElementById("choices");
       container.innerHTML = "";
+
       currentQuestion.choices.forEach(choice => {
         const btn = document.createElement("button");
         btn.textContent = choice;
@@ -120,28 +125,30 @@
       element.classList.add("selected");
 
       let isCorrect = false;
-      let correctText = "";
+      let correctAnswer = "";
       let explanation = "";
 
       if (currentQuestion.type === 1) {
         isCorrect = selected === currentQuestion.correct;
-        correctText = currentQuestion.correct;
+        correctAnswer = currentQuestion.correct;
+
         explanation = currentQuestion.choices
-          .filter(choice => choice !== correctText)
-          .map(w => {
-            const match = questions.find(q => q.incorrect === w);
+          .filter(c => c !== correctAnswer)
+          .map(c => {
+            const match = questions.find(q => q.incorrect === c);
             return match ? `正しい文：「${match.correct}」` : "";
           })
           .join("<br>");
       } else {
         isCorrect = selected === currentQuestion.incorrect;
-        correctText = currentQuestion.incorrect;
-        const match = questions.find(q => q.incorrect === correctText);
+        correctAnswer = currentQuestion.incorrect;
+
+        const match = questions.find(q => q.incorrect === correctAnswer);
         explanation = match ? `正しい文：「${match.correct}」` : "";
       }
 
       allChoices.forEach(c => {
-        if (c.textContent === correctText) {
+        if (c.textContent === correctAnswer) {
           c.classList.add("correct-answer");
         }
       });
@@ -171,6 +178,10 @@
       }
     }
 
+    function shuffleArray(array) {
+      return array.slice().sort(() => Math.random() - 0.5);
+    }
+
     document.getElementById("start-button").onclick = startQuiz;
     document.getElementById("next-button").onclick = showNextQuestion;
     document.getElementById("reset-button").onclick = () => location.reload();
@@ -178,7 +189,6 @@
       remainingQuestions = [...incorrectQuestions];
       incorrectQuestions = [];
       currentIndex = 0;
-      isReviewMode = true;
       showNextQuestion();
     };
     document.getElementById("continue-button").onclick = () => {
