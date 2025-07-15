@@ -2,75 +2,93 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
   <title>正誤問題クイズ</title>
   <style>
+    * {
+      box-sizing: border-box;
+    }
     body {
       font-family: sans-serif;
-      padding: 20px;
-      max-width: 800px;
-      margin: auto;
-      background-color: #ffffff;
-      color: #333;
+      margin: 0;
+      padding: 0;
+      background-color: #fff;
+      color: #222;
+      display: flex;
+      justify-content: center;
+    }
+    #quiz-container {
+      width: 100%;
+      max-width: 480px;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      min-height: 100vh;
+      justify-content: center;
     }
     h1 {
-      font-size: 1.5em;
+      font-size: 20px;
       text-align: center;
-    }
-    .question {
-      font-size: 1.2em;
       margin-bottom: 10px;
     }
-    .choice {
-      display: block;
-      width: 100%;
-      margin: 8px 0;
-      padding: 12px;
-      font-size: 1em;
-      border: 1px solid #ccc;
-      background-color: #f5f5f5;
-      border-radius: 5px;
-      cursor: pointer;
-      text-align: left;
+    .question {
+      font-size: 18px;
+      font-weight: bold;
+      text-align: center;
       word-break: break-word;
+    }
+    .choice {
+      background-color: #f0f0f0;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      padding: 12px;
+      font-size: 16px;
+      text-align: left;
+      cursor: pointer;
+      word-break: break-word;
+      width: 100%;
     }
     .choice:hover {
       background-color: #e0e0e0;
     }
     .result {
-      margin-top: 20px;
+      font-size: 16px;
       font-weight: bold;
-      font-size: 1em;
+      color: #d32f2f;
+      word-break: break-word;
+      text-align: center;
     }
     .buttons {
-      margin-top: 20px;
       display: flex;
       flex-direction: column;
       gap: 10px;
+      margin-top: 10px;
     }
     button {
       padding: 12px;
-      font-size: 1em;
-      border: none;
-      border-radius: 5px;
+      font-size: 16px;
       background-color: #4285f4;
-      color: white;
+      color: #fff;
+      border: none;
+      border-radius: 6px;
       cursor: pointer;
     }
     button:hover {
       background-color: #3367d6;
     }
-    @media (max-width: 600px) {
-      .choice, button {
-        font-size: 1.1em;
-        padding: 14px;
+
+    @media screen and (max-height: 700px) {
+      #quiz-container {
+        justify-content: flex-start;
+        padding-top: 10px;
       }
     }
   </style>
 </head>
 <body>
-  <h1>正誤問題クイズ</h1>
   <div id="quiz-container">
+    <h1>正誤問題クイズ</h1>
     <div class="question" id="question"></div>
     <div id="choices"></div>
     <div class="result" id="result"></div>
@@ -107,9 +125,9 @@
       }
 
       const pattern = Math.random() < 0.5 ? 1 : 2;
-      const questionType = pattern === 1 ?
-        "次のうち、正しい文章を選んでください" :
-        "次のうち、誤った文章はどれでしょう";
+      const questionType = pattern === 1
+        ? "次のうち、正しい文章を選んでください"
+        : "次のうち、誤った文章はどれでしょう";
 
       const current = unused.pop();
       used.push(current);
