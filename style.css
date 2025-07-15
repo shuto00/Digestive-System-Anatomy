@@ -1,120 +1,90 @@
 body {
-  font-family: 'Segoe UI', 'Noto Sans JP', sans-serif;
+  font-family: sans-serif;
   margin: 0;
-  padding: 20px;
-  background-color: #fdfdfd;
+  padding: 1rem;
+  background: #f5f5f5;
   color: #333;
+  max-width: 600px;
+  margin: auto;
 }
 
 #title {
+  text-align: center;
   font-size: 1.8rem;
-  font-weight: bold;
-  text-align: center;
-  margin-bottom: 20px;
-}
-
-#setup {
-  text-align: center;
-  margin-top: 40px;
-}
-
-#setup select,
-#setup button {
-  font-size: 1rem;
-  padding: 10px;
-  margin-top: 10px;
-}
-
-#quiz-area {
-  max-width: 600px;
-  margin: 0 auto;
-}
-
-.question-box {
-  background-color: #fff;
-  border-radius: 12px;
-  box-shadow: 0 0 10px rgba(0,0,0,0.1);
-  padding: 20px;
-  margin-bottom: 20px;
-}
-
-#question-text {
-  font-size: 1.2rem;
-  margin-bottom: 16px;
-}
-
-#choices {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.choice {
-  padding: 12px;
-  font-size: 1rem;
-  border: 2px solid #ccc;
-  border-radius: 8px;
-  background-color: #f7f7f7;
-  cursor: pointer;
-  transition: 0.2s;
-}
-
-.choice:hover {
-  background-color: #ececec;
-}
-
-.selected {
-  border: 2px solid red;
-}
-
-.correct-answer {
-  background-color: #c0f0c0 !important;
-}
-
-#explanation {
-  background-color: #f0f0ff;
-  padding: 10px;
-  border-left: 4px solid #5555ff;
-  margin-top: 16px;
-  border-radius: 6px;
-  font-size: 0.95rem;
-}
-
-button {
-  padding: 10px 16px;
-  font-size: 1rem;
-  margin-top: 20px;
-  border: none;
-  border-radius: 6px;
-  background-color: #2a7ae2;
-  color: white;
-  cursor: pointer;
-  transition: 0.2s;
-}
-
-button:hover {
-  background-color: #1a5ac7;
-}
-
-#score-display {
-  font-size: 1.2rem;
-  font-weight: bold;
-  text-align: center;
-  margin-top: 10px;
-}
-
-#review-buttons {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  margin-top: 20px;
-  align-items: center;
-}
-
-#reset-button {
-  background-color: #555;
+  margin-bottom: 1rem;
 }
 
 .hidden {
   display: none;
+}
+
+.question-box {
+  background: white;
+  padding: 1rem;
+  border-radius: 1rem;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  margin-bottom: 1rem;
+}
+
+.choice {
+  display: block;
+  width: 100%;
+  padding: 1rem;
+  margin: 0.5rem 0;
+  font-size: 1.1rem;
+  border: 1px solid #ccc;
+  border-radius: 0.5rem;
+  background: #fff;
+  text-align: left;
+  cursor: pointer;
+  word-break: break-word;
+  color: black; /* ← ここで選択肢の文字色を黒に指定 */
+}
+
+.choice:hover {
+  background: #eee;
+}
+
+.choice.selected {
+  border: 2px solid #dc3545; /* 赤い枠線 */
+}
+
+.choice.correct-answer {
+  background: #d4edda; /* 緑背景 */
+  color: #155724;       /* 緑系文字色 */
+}
+
+#next-button,
+#start-button,
+#reset-button {
+  display: inline-block;
+  padding: 0.75rem 1.5rem;
+  font-size: 1rem;
+  border: none;
+  background-color: #007bff;
+  color: white;
+  border-radius: 0.5rem;
+  cursor: pointer;
+  margin-top: 1rem;
+}
+
+#explanation {
+  margin-top: 1rem;
+  background: #fff3cd;
+  padding: 0.75rem;
+  border-radius: 0.5rem;
+  font-size: 0.95rem;
+}
+
+#score-display {
+  margin-top: 1.5rem;
+  font-size: 1.2rem;
+  font-weight: bold;
+  text-align: center;
+}
+
+select {
+  font-size: 1rem;
+  padding: 0.5rem;
+  margin-top: 1rem;
 }
