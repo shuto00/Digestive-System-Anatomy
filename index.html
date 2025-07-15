@@ -56,7 +56,7 @@
       document.getElementById("setup").classList.add("hidden");
       document.getElementById("quiz-area").classList.remove("hidden");
 
-      // ✅ 表示状態の初期化
+      // 表示リセット
       document.getElementById("question-counter").classList.remove("hidden");
       document.getElementById("score-display").classList.add("hidden");
       document.getElementById("review-buttons").classList.add("hidden");
@@ -173,6 +173,7 @@
       document.getElementById("explanation").innerHTML = explanation;
       document.getElementById("explanation").classList.remove("hidden");
       document.getElementById("next-button").classList.remove("hidden");
+      document.getElementById("review-buttons").classList.add("hidden"); // ✅ 出題中は常に非表示
     }
 
     function showResults() {
@@ -205,6 +206,7 @@
       remainingQuestions = [...incorrectQuestions];
       incorrectQuestions = [];
       currentIndex = 0;
+      document.getElementById("review-buttons").classList.add("hidden"); // 念のため復習中も非表示
       showNextQuestion();
     };
 
