@@ -15,8 +15,6 @@
       <option value="5">5問</option>
       <option value="10">10問</option>
       <option value="20">20問</option>
-      <option value="30">30問</option>
-      <option value="50">50問</option>
       <option value="all">全問挑戦</option>
     </select><br>
     <button id="start-button">開始</button>
@@ -30,27 +28,28 @@
       <button id="next-button" class="hidden">次へ</button>
     </div>
     <div id="score-display" class="hidden"></div>
-    <div id="review-buttons" class="hidden">
-      <button id="review-button">間違えた問題を復習</button>
-      <button id="continue-button">次の問題へ</button>
+    <div id="review-controls" class="hidden">
+      <button id="start-review-button">復習モード開始</button>
+      <button id="continue-button">次の出題に進む</button>
     </div>
     <button id="reset-button" class="hidden">リセット</button>
   </div>
 
   <script>
-    let questions = [];
+    let allPairs = [];
     let usedPairs = new Set();
-    let questionPool = [];
-    let reviewQueue = [];
-    let incorrectQuestions = [];
-    let currentQuestion;
+    let mainQuestions = [];
+    let currentSet = [];
+    let currentQuestion = null;
     let score = 0;
     let total = 0;
-    let isReviewing = false;
+    let reviewMode = false;
+    let wrongAnswers = [];
 
     async function loadData() {
       const res = await fetch("questions.json");
-      questions = await res.json();
+      const data = await res.json();
+      allPairs = data;
     }
 
     function startQuiz() {
@@ -59,40 +58,58 @@
       document.getElementById("quiz-area").classList.remove("hidden");
 
       const count = document.getElementById("question-count").value;
-      const filtered = questions.filter(q => !usedPairs.has(q.correct));
-      const shuffled = [...filtered].sort(() => Math.random() - 0.5);
-      questionPool = (count === "all") ? shuffled : shuffled.slice(0, parseInt(count));
-      total = questionPool.length;
+      const unusedPairs = allPairs.filter((_, i) => !usedPairs.has(i));
+      const shuffled = unusedPairs.sort(() => Math.random() - 0.5);
+      currentSet = count === "all" ? shuffled : shuffled.slice(0, parseInt(count));
+      currentSet.forEach(q => usedPairs.add(allPairs.indexOf(q)));
+
+      total = currentSet.length;
       score = 0;
-      incorrectQuestions = [];
-      isReviewing = false;
+      wrongAnswers = [];
+      reviewMode = false;
+
       showNextQuestion();
     }
 
     function showNextQuestion() {
-      document.getElementById("explanation").classList.add("hidden");
-      document.getElementById("next-button").classList.add("hidden");
-
-      if (questionPool.length === 0) {
-        showResults();
+      if (currentSet.length === 0) {
+        showScore();
         return;
       }
 
-      const q = questionPool.pop();
-      usedPairs.add(q.correct);
-      currentQuestion = q;
+      document.getElementById("explanation").classList.add("hidden");
+      document.getElementById("next-button").classList.add("hidden");
 
-      const choices = [q.correct, ...q.incorrects].sort(() => Math.random() - 0.5);
-      const type = Math.random() < 0.5 ? 1 : 2;
-      currentQuestion.choices = choices;
-      currentQuestion.type = type;
+      const q = currentSet.pop();
+      const showCorrect = Math.random() < 0.5;
+      const mainText = showCorrect ? q.correct : q.incorrects[0];
+      const answerType = showCorrect ? "correct" : "incorrect";
+
+      currentQuestion = {
+        pair: q,
+        main: mainText,
+        answerType: answerType
+      };
+
+      const others = allPairs.filter(p => p !== q);
+      const choices = [mainText];
+
+      while (choices.length < 3 && others.length > 0) {
+        const other = others.splice(Math.floor(Math.random() * others.length), 1)[0];
+        const alt = Math.random() < 0.5 ? other.correct : other.incorrects[0];
+        if (!choices.includes(alt)) choices.push(alt);
+      }
+
+      const shuffledChoices = choices.sort(() => Math.random() - 0.5);
 
       document.getElementById("question-text").textContent =
-        type === 1 ? "次のうち、正しい文章を選んでください。" : "次のうち、誤った文章はどれでしょう？";
+        answerType === "correct"
+          ? "次のうち、正しい文章を選んでください。"
+          : "次のうち、誤った文章はどれでしょう？";
 
       const container = document.getElementById("choices");
       container.innerHTML = "";
-      choices.forEach(choice => {
+      shuffledChoices.forEach(choice => {
         const btn = document.createElement("button");
         btn.textContent = choice;
         btn.className = "choice";
@@ -102,82 +119,66 @@
     }
 
     function handleAnswer(selected, element) {
-      const allChoices = document.querySelectorAll(".choice");
-      allChoices.forEach(c => c.onclick = null);
+      const buttons = document.querySelectorAll(".choice");
+      buttons.forEach(btn => (btn.onclick = null));
 
       element.classList.add("selected");
+      let correctAnswer =
+        currentQuestion.answerType === "correct"
+          ? currentQuestion.main
+          : currentQuestion.pair.incorrects[0];
 
-      const isCorrect = (
-        (currentQuestion.type === 1 && selected === currentQuestion.correct) ||
-        (currentQuestion.type === 2 && currentQuestion.incorrects.includes(selected))
-      );
+      let isCorrect = selected === correctAnswer;
 
-      allChoices.forEach(c => {
-        if (
-          (currentQuestion.type === 1 && c.textContent === currentQuestion.correct) ||
-          (currentQuestion.type === 2 && currentQuestion.incorrects.includes(c.textContent))
-        ) {
-          c.classList.add("correct-answer");
+      buttons.forEach(btn => {
+        if (btn.textContent === correctAnswer) {
+          btn.classList.add("correct-answer");
         }
       });
 
       if (!isCorrect) {
-        incorrectQuestions.push(currentQuestion);
+        wrongAnswers.push(currentQuestion);
       } else {
         score++;
       }
 
-      const explanation = (currentQuestion.type === 1)
-        ? currentQuestion.incorrects.map(w => `正しい文：「${getCorrectFromIncorrect(w)}」`).join("<br>")
-        : `正しい文：「${getCorrectFromIncorrect(selected)}」`;
+      let explanation =
+        currentQuestion.answerType === "correct"
+          ? `正しい文：「${currentQuestion.pair.correct}」`
+          : `正しい文：「${currentQuestion.pair.correct}」`;
 
       document.getElementById("explanation").innerHTML = explanation;
       document.getElementById("explanation").classList.remove("hidden");
       document.getElementById("next-button").classList.remove("hidden");
     }
 
-    function getCorrectFromIncorrect(incorrect) {
-      for (const q of questions) {
-        if (q.incorrects.includes(incorrect)) return q.correct;
-      }
-      return "";
-    }
-
-    function showResults() {
+    function showScore() {
       document.getElementById("question-text").textContent = "終了！";
       document.getElementById("choices").innerHTML = "";
-      document.getElementById("explanation").classList.add("hidden");
-      document.getElementById("next-button").classList.add("hidden");
-
       document.getElementById("score-display").textContent = `スコア：${score} / ${total}`;
       document.getElementById("score-display").classList.remove("hidden");
 
-      if (incorrectQuestions.length > 0) {
-        document.getElementById("review-buttons").classList.remove("hidden");
+      if (wrongAnswers.length > 0 && !reviewMode) {
+        document.getElementById("review-controls").classList.remove("hidden");
       } else {
         document.getElementById("reset-button").classList.remove("hidden");
       }
     }
 
+    function startReview() {
+      reviewMode = true;
+      currentSet = [...wrongAnswers];
+      wrongAnswers = [];
+      total += currentSet.length;
+      document.getElementById("review-controls").classList.add("hidden");
+      showNextQuestion();
+    }
+
     document.getElementById("start-button").onclick = startQuiz;
     document.getElementById("next-button").onclick = showNextQuestion;
     document.getElementById("reset-button").onclick = () => location.reload();
-
-    document.getElementById("review-button").onclick = () => {
-      questionPool = [...incorrectQuestions];
-      total += incorrectQuestions.length;
-      incorrectQuestions = [];
-      isReviewing = true;
-      document.getElementById("review-buttons").classList.add("hidden");
-      document.getElementById("score-display").classList.add("hidden");
-      showNextQuestion();
-    };
-
-    document.getElementById("continue-button").onclick = () => {
-      document.getElementById("review-buttons").classList.add("hidden");
-      document.getElementById("score-display").classList.add("hidden");
-      startQuiz();
-    };
+    document.getElementById("start-review-button").onclick = startReview;
+    document.getElementById("continue-button").onclick = startQuiz;
 
     loadData();
   </script>
