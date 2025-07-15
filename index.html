@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>正誤問題クイズ</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: #f9f9f9;
+      margin: 0;
+      padding: 20px;
+      color: #333;
+    }
+    .container {
+      max-width: 500px;
+      margin: auto;
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      padding: 20px;
+    }
+    h1 {
+      font-size: 1.5em;
+      text-align: center;
+      color: #2c3e50;
+    }
+    .question {
+      font-size: 1.1em;
+      margin: 20px 0;
+    }
+    .choice {
+      background: #eef;
+      border-radius: 8px;
+      padding: 10px;
+      margin: 10px 0;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+    .choice:hover {
+      background: #dde;
+    }
+    .result {
+      margin-top: 20px;
+      padding: 10px;
+      background: #def;
+      border-radius: 8px;
+    }
+    .reset-button {
+      margin-top: 10px;
+      padding: 10px 15px;
+      font-size: 1em;
+      border: none;
+      border-radius: 6px;
+      background: #3498db;
+      color: #fff;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>正誤問題クイズ</h1>
+    <div class="question" id="question">問題を読み込み中...</div>
+    <div id="choices"></div>
+    <div class="result" id="result"></div>
+    <button class="reset-button" onclick="resetQuiz()">次の問題</button>
+  </div>
+
+  <script>
+    let questionData = [];
+    let usedIndices = [];
+    let currentCorrect = '';
+    let correctionMap = {};
+
+    async function fetchData() {
+      const response = await fetch('The%20question%20data.xlsx');
+      const arrayBuffer = await response.arrayBuffer();
+      const workbook = XLSX.read(arrayBuffer, { type: 'array' });
+      const sheet = workbook.Sheets[workbook.SheetNames[0]];
+      const json = XLSX.utils.sheet_to_json(sheet);
+      questionData = json.map(row => ({ correct: row['正解文'], incorrect: row['誤文'] })).filter(row => row.correct && row.incorrect);
+      loadQuestion();
+    }
+
+    function loadQuestion() {
+      document.getElementById('result').textContent = '';
+      if (usedIndices.length === questionData.length) {
+        document.getElementById('question').textContent = 'すべての問題を出題しました。「次の問題」で再スタートできます。';
+        usedIndices = [];
+        return;
+      }
+
+      let index;
+      do {
+        index = Math.floor(Math.random() * questionData.length);
+      } while (usedIndices.includes(index));
+
+      usedIndices.push(index);
+      const { correct, incorrect } = questionData[index];
+
+      const pattern = Math.random() > 0.5 ? '正解を選ぶ' : '誤りを選ぶ';
+      const questionText = pattern === '正解を選ぶ' ? '次のうち、正しい文章を選んでください。' : '次のうち、誤った文章はどれでしょう？';
+      document.getElementById('question').textContent = questionText;
+
+      let options;
+      if (pattern === '正解を選ぶ') {
+        const distractor = questionData[Math.floor(Math.random() * questionData.length)].incorrect;
+        options = shuffle([correct, incorrect, distractor]);
+        currentCorrect = correct;
+        correctionMap = { [incorrect]: correct, [distractor]: '別の誤文の正答: ' + correct };
+      } else {
+        const distractor = questionData[Math.floor(Math.random() * questionData.length)].correct;
+        options = shuffle([incorrect, correct, distractor]);
+        currentCorrect = incorrect;
+        correctionMap = { [incorrect]: correct };
+      }
+
+      const choiceContainer = document.getElementById('choices');
+      choiceContainer.innerHTML = '';
+      options.forEach(option => {
+        const div = document.createElement('div');
+        div.className = 'choice';
+        div.textContent = option;
+        div.onclick = () => evaluateAnswer(option);
+        choiceContainer.appendChild(div);
+      });
+    }
+
+    function evaluateAnswer(selected) {
+      const resultDiv = document.getElementById('result');
+      if (selected === currentCorrect) {
+        resultDiv.innerHTML = '<strong>正解です！</strong>';
+      } else {
+        resultDiv.innerHTML = `<strong>不正解。</strong><br>この誤文の正しい文章：<br><em>${correctionMap[selected] || '情報なし'}</em>`;
+      }
+    }
+
+    function shuffle(array) {
+      return array.sort(() => Math.random() - 0.5);
+    }
+
+    function resetQuiz() {
+      loadQuestion();
+    }
+
+    // 外部ライブラリ読み込み後に実行
+    window.onload = () => {
+      const script = document.createElement('script');
+      script.src = 'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';
+      script.onload = fetchData;
+      document.body.appendChild(script);
+    };
+  </script>
+</body>
+</html>
