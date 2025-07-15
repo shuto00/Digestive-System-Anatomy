@@ -7,259 +7,238 @@
   <style>
     body {
       font-family: sans-serif;
+      margin: 0;
       padding: 1rem;
+      background: #f5f5f5;
+      color: #333;
       max-width: 600px;
       margin: auto;
     }
-    h1, h2 {
+
+    #title {
       text-align: center;
+      font-size: 1.8rem;
+      margin-bottom: 1rem;
     }
-    button {
-      padding: 0.75rem 1.5rem;
-      font-size: 1rem;
-      margin-top: 1rem;
-    }
-    .choice {
-      display: block;
-      margin: 1rem 0;
-      padding: 1rem;
-      background: #f0f0f0;
-      border-radius: 8px;
-      font-size: 1.2rem;
-      cursor: pointer;
-      line-height: 1.5;
-    }
-    .choice.correct {
-      background: #d4edda;
-      color: #155724;
-    }
-    .choice.incorrect {
-      background: #f8d7da;
-      color: #721c24;
-    }
-    .explanation {
-      background: #fff3cd;
-      padding: 1rem;
-      border-radius: 8px;
-      margin-top: 1rem;
-      font-size: 1rem;
-      color: #856404;
-    }
+
     .hidden {
       display: none;
     }
-    .footer {
-      margin-top: 2rem;
-      text-align: center;
-      font-size: 1rem;
+
+    .question-box {
+      background: white;
+      padding: 1rem;
+      border-radius: 1rem;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      margin-bottom: 1rem;
     }
-    @media screen and (max-width: 600px) {
-      .choice {
-        font-size: 1rem;
-        padding: 1rem;
-      }
+
+    .choice {
+      display: block;
+      width: 100%;
+      padding: 1rem;
+      margin: 0.5rem 0;
+      font-size: 1.1rem;
+      border: 1px solid #ccc;
+      border-radius: 0.5rem;
+      background: #fff;
+      text-align: left;
+      cursor: pointer;
+      word-break: break-word;
+    }
+
+    .choice:hover {
+      background: #eee;
+    }
+
+    .choice.selected {
+      border: 2px solid #dc3545;
+    }
+
+    .choice.correct-answer {
+      background: #d4edda;
+      color: #155724;
+    }
+
+    #next-button, #start-button, #reset-button {
+      display: inline-block;
+      padding: 0.75rem 1.5rem;
+      font-size: 1rem;
+      border: none;
+      background-color: #007bff;
+      color: white;
+      border-radius: 0.5rem;
+      cursor: pointer;
+      margin-top: 1rem;
+    }
+
+    #explanation {
+      margin-top: 1rem;
+      background: #fff3cd;
+      padding: 0.75rem;
+      border-radius: 0.5rem;
+      font-size: 0.95rem;
+    }
+
+    #score-display {
+      margin-top: 1.5rem;
+      font-size: 1.2rem;
+      font-weight: bold;
+      text-align: center;
+    }
+
+    select {
+      font-size: 1rem;
+      padding: 0.5rem;
+      margin-top: 1rem;
     }
   </style>
 </head>
 <body>
+  <div id="title">正誤問題クイズ</div>
 
-  <h1>正誤問題クイズ</h1>
+  <div id="setup">
+    <label>問題数を選んでください:</label><br>
+    <select id="question-count">
+      <option value="5">5問</option>
+      <option value="10">10問</option>
+      <option value="15">15問</option>
+      <option value="all">全問挑戦</option>
+    </select><br>
+    <button id="start-button">開始</button>
+  </div>
 
-  <div id="start-screen">
-    <h2>モードを選択</h2>
-    <label><input type="radio" name="mode" value="challenge" checked> チャレンジモード</label><br>
-    <label><input type="radio" name="mode" value="all"> 全問モード</label>
-
-    <div id="question-count-group">
-      <label>出題数を選択：</label>
-      <select id="question-count">
-        <option value="5">5問</option>
-        <option value="10">10問</option>
-        <option value="20">20問</option>
-      </select>
+  <div id="quiz-area" class="hidden">
+    <div class="question-box">
+      <div id="question-text"></div>
+      <div id="choices"></div>
+      <div id="explanation" class="hidden"></div>
+      <button id="next-button" class="hidden">次へ</button>
     </div>
-
-    <button onclick="startQuiz()">スタート！</button>
-  </div>
-
-  <div id="quiz-screen" class="hidden">
-    <h2 id="question-text"></h2>
-    <div id="choices"></div>
-    <div id="explanation" class="explanation hidden"></div>
-    <button id="next-button" class="hidden" onclick="nextQuestion()">次の問題</button>
-  </div>
-
-  <div id="result-screen" class="hidden">
-    <h2>クイズ終了！</h2>
-    <p id="score-text"></p>
-    <button onclick="resetQuiz()">もう一度プレイ</button>
-  </div>
-
-  <div class="footer">
-    <button onclick="resetProgress()">リセット（出題履歴削除）</button>
+    <div id="score-display" class="hidden"></div>
+    <button id="reset-button" class="hidden">リセット</button>
   </div>
 
   <script>
-    let allQuestions = [];
+    let questions = [];
     let remainingQuestions = [];
-    let currentQuestion = null;
+    let currentQuestion;
     let score = 0;
-    let currentIndex = 0;
-    let questionLimit = 5;
-    let mode = 'challenge';
+    let total = 0;
 
-    fetch('questions.json')
-      .then(response => response.json())
-      .then(data => {
-        allQuestions = data;
-      });
-
-    function startQuiz() {
-      mode = document.querySelector('input[name="mode"]:checked').value;
-      questionLimit = mode === 'all' ? allQuestions.length : parseInt(document.getElementById('question-count').value);
-      remainingQuestions = [...allQuestions];
-      score = 0;
-      currentIndex = 0;
-      document.getElementById('start-screen').classList.add('hidden');
-      document.getElementById('quiz-screen').classList.remove('hidden');
-      nextQuestion();
+    // 正誤対応データから正解文を取得
+    function getCorrectFromIncorrect(incorrect) {
+      for (const q of questions) {
+        if (q.incorrects.includes(incorrect)) return q.correct;
+      }
+      return "";
     }
 
-    function nextQuestion() {
-      document.getElementById('explanation').classList.add('hidden');
-      document.getElementById('next-button').classList.add('hidden');
+    // 問題データの読み込み
+    async function loadData() {
+      const res = await fetch("questions.json");
+      const data = await res.json();
+      questions = data;
+    }
 
-      if (currentIndex >= questionLimit || remainingQuestions.length === 0) {
-        showResult();
+    // クイズ開始
+    function startQuiz() {
+      document.getElementById("title").classList.add("hidden");
+      document.getElementById("setup").classList.add("hidden");
+      document.getElementById("quiz-area").classList.remove("hidden");
+
+      const count = document.getElementById("question-count").value;
+      const shuffled = [...questions].sort(() => Math.random() - 0.5);
+      remainingQuestions = (count === "all") ? shuffled : shuffled.slice(0, parseInt(count));
+      total = remainingQuestions.length;
+      score = 0;
+      showNextQuestion();
+    }
+
+    // 次の問題を表示
+    function showNextQuestion() {
+      if (remainingQuestions.length === 0) {
+        document.getElementById("question-text").textContent = "終了！";
+        document.getElementById("choices").innerHTML = "";
+        document.getElementById("explanation").classList.add("hidden");
+        document.getElementById("next-button").classList.add("hidden");
+        document.getElementById("score-display").textContent = `スコア：${score} / ${total}`;
+        document.getElementById("score-display").classList.remove("hidden");
+        document.getElementById("reset-button").classList.remove("hidden");
         return;
       }
 
-      const questionSet = drawRandomQuestion();
-      currentQuestion = createQuestionPattern(questionSet);
-      displayQuestion();
-      currentIndex++;
-    }
+      document.getElementById("explanation").classList.add("hidden");
+      document.getElementById("next-button").classList.add("hidden");
 
-    function drawRandomQuestion() {
-      const index = Math.floor(Math.random() * remainingQuestions.length);
-      const item = remainingQuestions[index];
-      remainingQuestions.splice(index, 1);
-      return item;
-    }
+      const q = remainingQuestions.pop();
+      currentQuestion = q;
 
-    function createQuestionPattern(set) {
-      const isType1 = Math.random() < 0.5;
-      const choices = isType1
-        ? [set.correct, set.incorrect, getAnotherIncorrect(set)]
-        : [set.incorrect, getAnotherCorrect(set), set.correct];
-      return {
-        type: isType1 ? 1 : 2,
-        correct: set.correct,
-        incorrect: set.incorrect,
-        choices: shuffleArray(choices)
-      };
-    }
+      const choices = [q.correct, ...q.incorrects].sort(() => Math.random() - 0.5);
+      const type = Math.random() < 0.5 ? 1 : 2;
+      currentQuestion.choices = choices;
+      currentQuestion.type = type;
 
-    function displayQuestion() {
-      const qText = currentQuestion.type === 1
-        ? '次のうち、正しい文章を選んでください'
-        : '次のうち、誤った文章はどれでしょう？';
-      document.getElementById('question-text').textContent = qText;
+      document.getElementById("question-text").textContent =
+        type === 1 ? "次のうち、正しい文章を選んでください。" : "次のうち、誤った文章はどれでしょう？";
 
-      const choiceContainer = document.getElementById('choices');
-      choiceContainer.innerHTML = '';
-      currentQuestion.choices.forEach(choice => {
-        const btn = document.createElement('div');
-        btn.className = 'choice';
+      const container = document.getElementById("choices");
+      container.innerHTML = "";
+      choices.forEach(choice => {
+        const btn = document.createElement("button");
         btn.textContent = choice;
+        btn.className = "choice";
         btn.onclick = () => handleAnswer(choice, btn);
-        choiceContainer.appendChild(btn);
+        container.appendChild(btn);
       });
     }
 
+    // 回答処理
     function handleAnswer(selected, element) {
-      const allChoices = document.querySelectorAll('.choice');
-      allChoices.forEach(c => c.onclick = null);
+      const allChoices = document.querySelectorAll(".choice");
+      allChoices.forEach(c => c.onclick = null); // 回答ロック
+
+      element.classList.add("selected"); // 赤枠
 
       let isCorrect = false;
-      let explanation = '';
+      let explanation = "";
 
       if (currentQuestion.type === 1) {
         isCorrect = selected === currentQuestion.correct;
-        if (isCorrect) {
-          element.classList.add('correct');
-          explanation += currentQuestion.choices
-            .filter(c => c !== currentQuestion.correct)
-            .map(c => `誤文：「${c}」 → 正しい文：「${getCorrectFromIncorrect(c)}」`).join('<br>');
-        } else {
-          element.classList.add('incorrect');
-          allChoices.forEach(c => {
-            if (c.textContent === currentQuestion.correct) c.classList.add('correct');
-          });
-          explanation += currentQuestion.choices
-            .filter(c => c !== currentQuestion.correct)
-            .map(c => `誤文：「${c}」 → 正しい文：「${getCorrectFromIncorrect(c)}」`).join('<br>');
-        }
+
+        allChoices.forEach(c => {
+          if (c.textContent === currentQuestion.correct) {
+            c.classList.add("correct-answer");
+          }
+        });
+
+        explanation = currentQuestion.incorrects
+          .map(w => `正しい文：「${getCorrectFromIncorrect(w)}」`)
+          .join("<br>");
+
       } else {
-        isCorrect = selected === currentQuestion.incorrect;
-        if (isCorrect) {
-          element.classList.add('correct');
-          explanation = `誤文：「${selected}」 → 正しい文：「${getCorrectFromIncorrect(selected)}」`;
-        } else {
-          element.classList.add('incorrect');
-          allChoices.forEach(c => {
-            if (c.textContent === currentQuestion.incorrect) c.classList.add('correct');
-          });
-          explanation = `正解はこの誤文：「${currentQuestion.incorrect}」<br>正しい文：「${currentQuestion.correct}」`;
-        }
+        isCorrect = currentQuestion.incorrects.includes(selected);
+
+        allChoices.forEach(c => {
+          if (currentQuestion.incorrects.includes(c.textContent)) {
+            c.classList.add("correct-answer");
+          }
+        });
+
+        explanation = `正しい文：「${getCorrectFromIncorrect(selected)}」`;
       }
 
       if (isCorrect) score++;
-      document.getElementById('explanation').innerHTML = explanation;
-      document.getElementById('explanation').classList.remove('hidden');
-      document.getElementById('next-button').classList.remove('hidden');
+      document.getElementById("explanation").innerHTML = explanation;
+      document.getElementById("explanation").classList.remove("hidden");
+      document.getElementById("next-button").classList.remove("hidden");
     }
 
-    function showResult() {
-      document.getElementById('quiz-screen').classList.add('hidden');
-      document.getElementById('result-screen').classList.remove('hidden');
-      const scoreText = `あなたのスコア：${score} / ${questionLimit}`;
-      document.getElementById('score-text').textContent = scoreText;
+    document.getElementById("start-button").onclick = startQuiz;
+    document.getElementById("next-button").onclick = showNextQuestion;
+    document.getElementById("reset-button").onclick = () => location.reload();
 
-      const bestKey = `bestScore-${mode}-${questionLimit}`;
-      const best = Math.max(score, parseInt(localStorage.getItem(bestKey) || '0'));
-      localStorage.setItem(bestKey, best);
-    }
-
-    function resetQuiz() {
-      document.getElementById('result-screen').classList.add('hidden');
-      document.getElementById('start-screen').classList.remove('hidden');
-    }
-
-    function resetProgress() {
-      localStorage.clear();
-      alert('ローカル記録をリセットしました');
-    }
-
-    function shuffleArray(arr) {
-      return arr.sort(() => Math.random() - 0.5);
-    }
-
-    function getAnotherIncorrect(set) {
-      const pool = allQuestions.filter(q => q !== set);
-      return pool[Math.floor(Math.random() * pool.length)].incorrect;
-    }
-
-    function getAnotherCorrect(set) {
-      const pool = allQuestions.filter(q => q !== set);
-      return pool[Math.floor(Math.random() * pool.length)].correct;
-    }
-
-    function getCorrectFromIncorrect(incorrectText) {
-      const match = allQuestions.find(q => q.incorrect === incorrectText);
-      return match ? match.correct : '不明';
-    }
+    loadData();
   </script>
-
 </body>
 </html>
