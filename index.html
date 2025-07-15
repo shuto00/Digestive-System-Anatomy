@@ -48,6 +48,7 @@
       cursor: pointer;
       word-break: break-word;
       width: 100%;
+      color: #000; /* 黒文字に設定 */
     }
     .choice:hover {
       background-color: #e0e0e0;
@@ -161,41 +162,4 @@
       let resultText = selected === correct ? "✅ 正解！" : "❌ 不正解！";
       if (selected !== correct) {
         if (selected === current.incorrect) {
-          resultText += `<br>→ この誤文の正しい文: ${current.correct}`;
-        } else if (selected === current.correct) {
-          resultText += `<br>→ この正解文に対応する誤文: ${current.incorrect}`;
-        }
-      }
-      document.getElementById("result").innerHTML = resultText;
-    }
-
-    function getRandomIncorrect() {
-      const all = [...data.map(d => d.incorrect)];
-      return all[Math.floor(Math.random() * all.length)];
-    }
-
-    function getRandomCorrect() {
-      const all = [...data.map(d => d.correct)];
-      return all[Math.floor(Math.random() * all.length)];
-    }
-
-    function resetQuiz() {
-      unused = [...data];
-      used = [];
-      document.getElementById("result").innerHTML = "";
-      nextQuestion();
-    }
-
-    fetch('data.json')
-      .then(response => response.json())
-      .then(json => {
-        data = json;
-        startQuiz();
-      })
-      .catch(err => {
-        document.getElementById("quiz-container").innerHTML = "データの読み込みに失敗しました。";
-        console.error(err);
-      });
-  </script>
-</body>
-</html>
+          resultText += `<br>→ この誤
