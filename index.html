@@ -59,7 +59,6 @@
       document.getElementById("setup").classList.add("hidden");
       document.getElementById("quiz-area").classList.remove("hidden");
 
-      // 初期化
       document.getElementById("question-counter").classList.remove("hidden");
       document.getElementById("score-display").classList.add("hidden");
       document.getElementById("review-buttons").classList.add("hidden");
@@ -93,8 +92,6 @@
       document.getElementById("question-counter").textContent = `【 ${currentIndex} / ${total} 問 】`;
       document.getElementById("explanation").classList.add("hidden");
       document.getElementById("next-button").classList.add("hidden");
-
-      // 必ず非表示
       document.getElementById("review-buttons").classList.add("hidden");
       document.getElementById("review-button").classList.add("hidden");
       document.getElementById("continue-button").classList.add("hidden");
@@ -182,8 +179,6 @@
       document.getElementById("explanation").innerHTML = explanation;
       document.getElementById("explanation").classList.remove("hidden");
       document.getElementById("next-button").classList.remove("hidden");
-
-      // 常に非表示にしておく
       document.getElementById("review-buttons").classList.add("hidden");
       document.getElementById("review-button").classList.add("hidden");
       document.getElementById("continue-button").classList.add("hidden");
@@ -224,17 +219,23 @@
       remainingQuestions = [...incorrectQuestions];
       incorrectQuestions = [];
       currentIndex = 0;
-
       document.getElementById("review-buttons").classList.add("hidden");
       document.getElementById("review-button").classList.add("hidden");
       document.getElementById("continue-button").classList.add("hidden");
-
       showNextQuestion();
     };
 
     document.getElementById("continue-button").onclick = () => {
       startQuiz();
     };
+
+    // ✅ ブラウザ離脱時の確認（usedIdsに出題済みがあるときのみ）
+    window.addEventListener("beforeunload", function (e) {
+      if (usedIds.length > 0) {
+        e.preventDefault();
+        e.returnValue = "このページを離れると、出題状況がリセットされます。本当に離れますか？";
+      }
+    });
 
     loadData();
   </script>
