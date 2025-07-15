@@ -56,6 +56,11 @@
       document.getElementById("setup").classList.add("hidden");
       document.getElementById("quiz-area").classList.remove("hidden");
 
+      // ✅ 表示状態の初期化
+      document.getElementById("question-counter").classList.remove("hidden");
+      document.getElementById("score-display").classList.add("hidden");
+      document.getElementById("review-buttons").classList.add("hidden");
+
       const count = document.getElementById("question-count").value;
       const availableQuestions = questions.filter(q => !usedIds.includes(q.id));
       if (availableQuestions.length === 0) {
@@ -108,7 +113,7 @@
       }
 
       currentQuestion.choices = shuffleArray(choices);
-      usedIds.push(q.id); // 出題履歴に記録
+      usedIds.push(q.id);
 
       document.getElementById("question-text").textContent =
         type === 1 ? "次のうち、正しい文章を選んでください。" : "次のうち、誤った文章はどれでしょう？";
